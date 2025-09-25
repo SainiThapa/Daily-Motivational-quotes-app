@@ -12,6 +12,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -33,8 +35,8 @@ class MyApp extends StatelessWidget {
               primarySwatch: Colors.blue,
               useMaterial3: true,
             ),
-            themeMode: settingsController.isDarkMode 
-                ? ThemeMode.dark 
+            themeMode: settingsController.isDarkMode
+                ? ThemeMode.dark
                 : ThemeMode.light,
             home: MainScreen(),
             debugShowCheckedModeBanner: false,
@@ -102,4 +104,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-

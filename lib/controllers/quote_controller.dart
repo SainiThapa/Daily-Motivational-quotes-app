@@ -5,11 +5,13 @@ import '../services/storage_service.dart';
 
 class QuoteController extends ChangeNotifier {
   List<Quote> _allQuotes = [];
+  List<Quote> _randomizedQuotes = [];
   List<Quote> _favoriteQuotes = [];
   Quote? _dailyQuote;
   bool _isLoading = true;
 
   List<Quote> get allQuotes => _allQuotes;
+  List<Quote> get randomizedQuotes => _randomizedQuotes;
   List<Quote> get favoriteQuotes => _favoriteQuotes;
   Quote? get dailyQuote => _dailyQuote;
   bool get isLoading => _isLoading;
@@ -29,8 +31,11 @@ class QuoteController extends ChangeNotifier {
       // Load favorite quotes
       _favoriteQuotes = await StorageService.getFavoriteQuotes();
       
-      // Set daily quote
+      // Set daily quote (random but consistent for the day)
       _dailyQuote = QuoteService.getDailyQuote(_allQuotes);
+      
+      // Get randomized quotes list
+      _randomizedQuotes = QuoteService.getRandomizedQuotes(_allQuotes);
       
     } catch (e) {
       print('Error initializing quotes: $e');
@@ -57,9 +62,21 @@ class QuoteController extends ChangeNotifier {
 
   Future<void> refreshDailyQuote() async {
     if (_allQuotes.isNotEmpty) {
-      _dailyQuote = QuoteService.getDailyQuote(_allQuotes);
+      // Get new random daily quote for testing
+      _randomizedQuotes = QuoteService.getRandomizedQuotes(_allQuotes);
+      _dailyQuote = _randomizedQuotes.first;
+      
       notifyListeners();
     }
   }
-}
 
+  // Get quotes by category
+  List<Quote> getQuotesByCategory(String category) {
+    return QuoteService.getQuotesByCategory(_allQuotes, category);
+  }
+
+  // Get all categories
+  List<String> getCategories() {
+    return QuoteService.getCategories(_allQuotes);
+  }
+}
