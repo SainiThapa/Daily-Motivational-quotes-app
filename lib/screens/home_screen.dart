@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../controllers/quote_controller.dart';
@@ -34,32 +35,140 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<bool> _onWillPop() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return _buildExitConfirmationDialog();
+      },
+    ) ?? false;
+  }
+
+  Widget _buildExitConfirmationDialog() {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: _buildGlassmorphismContainer(
+        context,
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.exit_to_app,
+              size: 48,
+              color: Colors.white,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Exit App?',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Are you sure you want to exit?',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDialogButton(
+                    context,
+                    text: 'Cancel',
+                    isPrimary: false,
+                    onTap: () => Navigator.of(context).pop(false),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildDialogButton(
+                    context,
+                    text: 'Exit',
+                    isPrimary: true,
+                    onTap: () => Navigator.of(context).pop(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogButton(
+    BuildContext context, {
+    required String text,
+    required bool isPrimary,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: isPrimary 
+            ? Colors.white.withOpacity(0.8)
+            : Colors.transparent,
+          border: Border.all(
+            color: Colors.white.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isPrimary 
+              ? Colors.white
+              : Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Consumer<QuoteController>(
-        builder: (context, quoteController, child) {
-          if (quoteController.isLoading) {
-            return _buildLoadingScreen(context);
-          }
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        body: Consumer<QuoteController>(
+          builder: (context, quoteController, child) {
+            if (quoteController.isLoading) {
+              return _buildLoadingScreen(context);
+            }
 
-          if (quoteController.allQuotes.isEmpty) {
-            return _buildEmptyScreen(context);
-          }
+            if (quoteController.allQuotes.isEmpty) {
+              return _buildEmptyScreen(context);
+            }
 
-          // Prepare quotes list with daily quote first
-          final dailyQuote = quoteController.dailyQuote;
-          final otherQuotes = quoteController.randomizedQuotes
-              .where((quote) => quote != dailyQuote)
-              .toList();
-          final allQuotesToShow = [
-            if (dailyQuote != null) dailyQuote,
-            ...otherQuotes,
-          ];
+            // Prepare quotes list with daily quote first
+            final dailyQuote = quoteController.dailyQuote;
+            final otherQuotes = quoteController.randomizedQuotes
+                .where((quote) => quote != dailyQuote)
+                .toList();
+            final allQuotesToShow = [
+              if (dailyQuote != null) dailyQuote,
+              ...otherQuotes,
+            ];
 
-          return _buildQuotePageView(context, quoteController, allQuotesToShow);
-        },
+            return _buildQuotePageView(context, quoteController, allQuotesToShow);
+          },
+        ),
       ),
     );
   }
@@ -186,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       padding: EdgeInsets.all(20),
       child: Column(
         children: [
-          // Top area with status and daily quote indicator
+          // Top area with daily quote indicator only
           SafeArea(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,9 +311,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         Icon(Icons.auto_awesome, color: Colors.white, size: 16),
                         SizedBox(width: 6),
                         Text(
-                          'Daily',
+                          'Daily Motivation for you',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -215,19 +324,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 else
                   SizedBox(),
 
-                // Quote counter
-                _buildGlassmorphismContainer(
-                  context,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Text(
-                    '${currentIndex + 1}/${totalQuotes}',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+                // Empty space where counter was - removed as requested
+                SizedBox(),
               ],
             ),
           ),
@@ -254,14 +352,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: Colors.white,
                               width: 1,
                             ),
                           ),
                           child: Text(
                             quote.category.toUpperCase(),
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
@@ -275,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         Text(
                           '"${quote.text}"',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Colors.white,
                             fontSize: 28,
                             fontWeight: FontWeight.w300,
                             height: 1.4,
@@ -290,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         Text(
                           '— ${quote.author}',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             fontStyle: FontStyle.italic,
@@ -304,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // Bottom actions
+          // Bottom actions - Updated with new buttons
           SafeArea(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -329,16 +427,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   onTap: () => _shareQuote(quote),
                 ),
 
-                // Refresh button (only for daily quote)
-                if (isDaily)
-                  _buildActionButton(
-                    context,
-                    icon: Icons.refresh,
-                    color: Colors.white,
-                    onTap: () => quoteController.refreshDailyQuote(),
-                  )
-                else
-                  SizedBox(width: 50),
+                // Copy button (replaces refresh for daily quote)
+                _buildActionButton(
+                  context,
+                  icon: Icons.copy,
+                  color: Colors.white,
+                  onTap: () => _copyQuote(quote),
+                ),
               ],
             ),
           ),
@@ -350,13 +445,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               children: [
                 Icon(
                   Icons.keyboard_arrow_up,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Colors.white,
                   size: 24,
                 ),
                 Text(
                   'Swipe up for next quote',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Colors.white,
                     fontSize: 12,
                   ),
                 ),
@@ -410,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         height: 60,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
+          border: Border.all(color: Colors.white, width: 1.5),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -424,7 +519,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(30),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Center(child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28)),
+            child: Center(child: Icon(icon, color: color, size: 28)),
           ),
         ),
       ),
@@ -440,16 +535,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         end: Alignment.bottomRight,
         colors: isDark
             ? [
+                Color(0xFF1a1a2e),
+                Color(0xFF16213e),
+                Color(0xFF0f0f23),
+                Color(0xFF533483),
+              ]
+            : [
                 Color(0xFF667eea),
                 Color(0xFF764ba2),
                 Color(0xFF6B73FF),
-                Color(0xFF000428),
-              ]
-            : [
-                Color(0xFFB3C7E6), 
-                Color(0xFFB0E0A8), 
-                Color(0xFFFAF3DD),
-                Color(0xFFF2C2C2),
+                Color(0xFF9A9CE3),
               ],
       ),
     );
@@ -459,5 +554,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final shareText = '"${quote.text}"\n\n— ${quote.author}';
     // Add your share implementation here
     print('Sharing: $shareText');
+  }
+
+  void _copyQuote(quote) {
+    final copyText = '"${quote.text}"\n\n— ${quote.author}';
+    Clipboard.setData(ClipboardData(text: copyText));
+    
+    // Show a snackbar to confirm copy
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Quote copied to clipboard!'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.white.withOpacity(0.8),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
   }
 }

@@ -4,10 +4,17 @@ import 'package:dailymotivationalquotesapp/screens/favorites_screen.dart';
 import 'package:dailymotivationalquotesapp/screens/home_screen.dart';
 import 'package:dailymotivationalquotesapp/screens/settings_screen.dart';
 import 'package:dailymotivationalquotesapp/widgets/bottom_nav_bar.dart';
+import 'package:dailymotivationalquotesapp/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  
   runApp(MyApp());
 }
 
